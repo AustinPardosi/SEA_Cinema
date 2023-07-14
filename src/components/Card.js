@@ -51,10 +51,10 @@ export default React.memo(function Card({ movieData }) {
                   title="play"
                   onClick={() => navigate("/player")}
                 />
-                <RiThumbUpFill title="like" />
-                <RiThumbDownFill title="Dislike" />
-                <AiOutlineMinusCircle title="Remove from List" />
-                <AiOutlinePlus title="Add to my List" />
+                <RiThumbUpFill title="like" onClick={() => navigate("/review")}/>
+                <RiThumbDownFill title="Dislike" onClick={() => navigate("/review")}/>
+                <AiOutlineMinusCircle title="Remove from List" onClick={() => navigate("/movies")}/>
+                <AiOutlinePlus title="Add to my List" onClick={() => navigate("/movies")}/>
               </div>
               <div className="info">
                 <BiChevronDown
@@ -65,10 +65,11 @@ export default React.memo(function Card({ movieData }) {
             </div>
             {showMoreInfo && (
               <div className="more-info">
-                <p>Description: {movieData.description}</p>
-                <p>Release Date: {movieData.release_date}</p>
-                <p>Age Rating: {movieData.age_rating}</p>
-                <p>Ticket Price: {movieData.ticket_price}</p>
+                <p><strong>Description:</strong> </p>
+                <p>{movieData.description}</p> <br/>
+                <p><strong>Release Date: </strong> {movieData.release_date}</p>
+                <p><strong>Age Rating: </strong> {movieData.age_rating}</p>
+                <p><strong>Ticket Price: </strong> {movieData.ticket_price}</p>
               </div>
             )}
           </div>
@@ -77,7 +78,6 @@ export default React.memo(function Card({ movieData }) {
     </CardContainer>
   );
 });
-
 
 const CardContainer = styled.div`
   margin-top: 1rem;

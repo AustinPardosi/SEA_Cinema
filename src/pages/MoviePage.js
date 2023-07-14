@@ -7,7 +7,14 @@ import "react-toastify/dist/ReactToastify.css";
 import Select from "react-select";
 import { db } from "../utils/firebase-config";
 import { firebaseAuth } from "../utils/firebase-config";
-import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  arrayUnion,
+  addDoc,
+  collection,
+} from "firebase/firestore";
 
 const MoviePage = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -63,6 +70,30 @@ const MoviePage = () => {
   const [allSeats, setAllSeats] = useState(Array(64).fill(false));
   const [initialSeats, setInitialSeats] = useState(Array(64).fill(true));
   const [movieAgeRating, setMovieAgeRating] = useState(0);
+  const [bookedSeats, setBookedSeats] = useState([]);
+  const [ticketPrice, setTicketPrice] = useState(0);
+
+  const fetchMovieData = async () => {
+    if (selectedMovie) {
+      try {
+        const movieDocRef = doc(db, "movies", selectedMovie);
+        const movieDocSnapshot = await getDoc(movieDocRef);
+        if (movieDocSnapshot.exists()) {
+          const movieData = movieDocSnapshot.data();
+          setAllSeats(movieData.seats);
+          setInitialSeats(movieData.seats);
+          setMovieAgeRating(movieData.age_rating);
+          setTicketPrice(movieData.ticket_price);
+
+          // Update bookedSeats state with the updated data
+          setBookedSeats(movieData.seats);
+        }
+      } catch (error) {
+        console.log("Error fetching movie data:", error);
+        toast.error("An error occurred. Please try again.");
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchBalance = async () => {
@@ -83,34 +114,19 @@ const MoviePage = () => {
   }, []);
 
   useEffect(() => {
-    const fetchMovieData = async () => {
-      if (selectedMovie) {
-        try {
-          const movieDocRef = doc(db, "movies", selectedMovie);
-          const movieDocSnapshot = await getDoc(movieDocRef);
-          if (movieDocSnapshot.exists()) {
-            const movieData = movieDocSnapshot.data();
-            setAllSeats(movieData.seats);
-            setInitialSeats(movieData.seats);
-            setMovieAgeRating(movieData.age_rating);
-          }
-        } catch (error) {
-          console.log("Error fetching movie data:", error);
-          toast.error("An error occurred. Please try again.");
-        }
-      }
-    };
-
     fetchMovieData();
   }, [selectedMovie]);
 
   const handleSeatSelect = (seatNumber) => {
+    if (bookedSeats.includes(seatNumber)) {
+      toast.error("The seat is already booked by someone else.");
+      return;
+    }
+
     if (selectedSeats.includes(seatNumber)) {
       setSelectedSeats(selectedSeats.filter((seat) => seat !== seatNumber));
     } else {
-      if (!allSeats[seatNumber - 1]) {
-        setSelectedSeats([...selectedSeats, seatNumber]);
-      }
+      setSelectedSeats([...selectedSeats, seatNumber]);
     }
   };
 
@@ -135,6 +151,10 @@ const MoviePage = () => {
       toast.error("Insufficient balance. Please top up your account.");
       return;
     }
+    if (name.trim() === "") {
+      toast.error("Please enter your name.");
+      return;
+    }
 
     try {
       // Update the seats in the Firestore document
@@ -156,10 +176,20 @@ const MoviePage = () => {
         // Update the balance state
         setBalance(newBalance);
 
+        // Save the transaction data to the "transactions" collection
+        const transactionData = {
+          email: currentUser.email,
+          movieTitle: selectedMovie,
+          seats: selectedSeats,
+          totalCost: totalCost,
+        };
+        await addDoc(collection(db, "transactions"), transactionData);
+
         // Mark the selected seats as booked
         setSelectedSeats([]);
 
         toast.success("Booking successful!");
+        fetchMovieData();
       }
     } catch (error) {
       console.log("Error updating balance:", error);
@@ -168,7 +198,6 @@ const MoviePage = () => {
   };
 
   const calculateTotalCost = () => {
-    const ticketPrice = 10;
     return selectedSeats.length * ticketPrice;
   };
 
@@ -185,50 +214,80 @@ const MoviePage = () => {
             onChange={(option) => setSelectedMovie(option.value)}
             options={movies.map((movie) => ({ value: movie, label: movie }))}
             isClearable
-            placeholder="Select a movie"
+            placeholder={selectedMovie ? selectedMovie : "Select a movie"}
+            defaultValue={selectedMovie}
             styles={{
               control: (provided) => ({
                 ...provided,
                 width: 300,
                 margin: "2rem auto",
               }),
+              menuPortal: (provided) => ({
+                ...provided,
+                zIndex: 9999,
+              }),
             }}
+            menuPortalTarget={document.body}
+            menuPosition="fixed"
           />
           {selectedMovie && (
             <>
               <h2>Seat Selection</h2>
               <div className="SeatGrid">
-                {initialSeats.map((seat, index) => (
-                  <div
-                    key={index + 1}
-                    className={`Seat ${
-                      selectedSeats.includes(index + 1) ? "selected" : ""
-                    } ${allSeats[index] ? "booked" : ""}`}
-                    onClick={() => {
-                      if (allSeats[index]) {
-                        toast.error("The seat is already booked by someone else.");
-                      } else {
-                        handleSeatSelect(index + 1);
-                      }
-                    }}
-                  >
-                    {index + 1}
-                  </div>
-                ))}
-              </div>
+                {Array(64)
+                  .fill()
+                  .map((_, index) => {
+                    const seatNumber = index + 1;
+                    const isSelected = selectedSeats.includes(seatNumber);
+                    const isBooked = bookedSeats.includes(seatNumber);
+                    const isSelectable = !isBooked;
 
+                    return (
+                      <div
+                        key={seatNumber}
+                        className={`Seat ${
+                          isBooked ? "booked" : isSelected ? "selected" : ""
+                        } ${isSelectable ? "selectable" : ""}`}
+                        onClick={() => {
+                          if (isSelectable) {
+                            handleSeatSelect(seatNumber);
+                          } else {
+                            toast.error(
+                              "The seat is already booked by someone else."
+                            );
+                          }
+                        }}
+                      >
+                        {seatNumber}
+                      </div>
+                    );
+                  })}
+              </div>
             </>
           )}
         </div>
         <div className="Form">
           <label htmlFor="name">Name:</label>
-          <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} />
+          <input
+            type="text"
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
 
           <label htmlFor="age">Age:</label>
-          <input type="number" id="age" value={age} onChange={(e) => setAge(e.target.value)} />
+          <input
+            type="number"
+            id="age"
+            value={age}
+            onChange={(e) => setAge(e.target.value)}
+          />
+
+          <h3>Total Cost: {calculateTotalCost().toLocaleString()}</h3> 
 
           <button onClick={handleBooking}>Book Tickets</button>
         </div>
+        <br />
         <Link to="/history" className="Link">
           View Transaction History
         </Link>
@@ -236,7 +295,7 @@ const MoviePage = () => {
       <ToastContainer />
     </MoviePageContainer>
   );
-}
+};
 
 const MoviePageContainer = styled.div`
   .MovieContainer {
@@ -271,6 +330,12 @@ const MoviePageContainer = styled.div`
       margin-bottom: 1rem;
     }
 
+    h3 {
+      margin-top: 1rem;
+      font-weight: lighter;
+      margin-bottom: 1rem;
+    }
+
     button {
       padding: 0.5rem 1rem;
       font-size: 16px;
@@ -290,14 +355,13 @@ const MoviePageContainer = styled.div`
       font-size: 24px;
       margin-bottom: 1rem;
     }
-    .movieSelect{
+    .movieSelect {
       color: black;
       width: auto;
     }
-    
   }
 
-  .Link{
+  .Link {
     margin-top: 1rem;
   }
 
@@ -318,17 +382,16 @@ const MoviePageContainer = styled.div`
     background-color: #f0f0f0;
     cursor: pointer;
     color: black;
-
     &.selected {
       background-color: green;
       color: white;
     }
+  }
 
-    &.booked {
-      background-color: red;
-      color: white;
-      cursor: not-allowed;
-    }
+  .Seat.booked {
+    background-color: red;
+    color: white;
+    cursor: not-allowed;
   }
 
   .Error {

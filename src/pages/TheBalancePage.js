@@ -50,6 +50,8 @@ export default function TheBalance() {
       if (!isNaN(amount) && amount > 0) {
         if (amount > balance) {
           toast.error("Balance is not sufficient");
+        } else if (amount > 500000) {
+          toast.error("Maximum withdrawal amount is 500,000");
         } else {
           const newBalance = balance - amount;
           setBalance(newBalance);
@@ -87,7 +89,7 @@ export default function TheBalance() {
   }, []);
 
   if (balance === null) {
-    return null; // Menampilkan loading state jika saldo belum diambil
+    return null; // Display a loading state if the balance is not fetched yet
   }
 
   return (
@@ -95,21 +97,26 @@ export default function TheBalance() {
       <TopNav isScrolled={isScrolled} />
       <div className="MoneyContainer">
         <h1>The Balance</h1>
-        <h3>Current Balance: {balance} Rupiah</h3>
+        <h3>Current User Balance: {balance.toLocaleString()} Rupiah</h3>
+        <h4>Choose an amount</h4>
         <div className="BubbleContainer">
-          <button onClick={() => setCustomAmount("20000")}>Rp20,000</button>
-          <button onClick={() => setCustomAmount("50000")}>Rp50,000</button>
-          <button onClick={() => setCustomAmount("100000")}>Rp100,000</button>
-          <button onClick={() => setCustomAmount("200000")}>Rp200,000</button>
-          <button onClick={() => setCustomAmount("300000")}>Rp300,000</button>
-          <button onClick={() => setCustomAmount("500000")}>Rp500,000</button>
+          <div className="ButtonWrapper">
+            <button onClick={() => setCustomAmount("20000")}>Rp20,000</button>
+            <button onClick={() => setCustomAmount("50000")}>Rp50,000</button>
+            <button onClick={() => setCustomAmount("100000")}>Rp100,000</button>
+          </div>
+          <div className="ButtonWrapper">
+            <button onClick={() => setCustomAmount("200000")}>Rp200,000</button>
+            <button onClick={() => setCustomAmount("300000")}>Rp300,000</button>
+            <button onClick={() => setCustomAmount("500000")}>Rp500,000</button>
+          </div>
         </div>
         <div className="CustomAmountContainer">
           <input
             type="number"
             value={customAmount}
             onChange={handleCustomAmountChange}
-            placeholder="Custom Amount"
+            placeholder="Or, type the amount"
           />
         </div>
         <ButtonContainer>
@@ -135,32 +142,45 @@ const BalanceContainer = styled.div`
     h3 {
       text-align: center;
     }
+    h4 {
+      margin-left: 36rem;
+      font-size: 20px;
+      margin-top: 3rem;
+    }
     .BubbleContainer {
       display: flex;
       flex-wrap: wrap;
+      flex-direction: column; /* Set flex direction to column */
       justify-content: center;
       align-items: center;
-      gap: 1rem;
-      margin-top: 3rem;
+      gap: 2rem;
+      margin-top: 1rem;
       margin-bottom: 2rem;
+    }
 
-      button {
-        border: none;
-        border-radius: 30%;
-        width: 100px;
-        height: 60px;
-        background-color: #e50914;
-        color: white;
-        font-size: 18px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        outline: none;
+    /* Add a new CSS class for the button wrapper */
+    .ButtonWrapper {
+      display: flex;
+      gap: 3rem;
+    }
 
-        &:hover {
-          background-color: #cc0810;
-        }
+    /* Adjust the button CSS */
+    button {
+      border: none;
+      border-radius: 30%;
+      width: 100px;
+      height: 60px;
+      background-color: #e50914;
+      color: white;
+      font-size: 18px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      outline: none;
+
+      &:hover {
+        background-color: #cc0810;
       }
     }
 
@@ -175,8 +195,42 @@ const BalanceContainer = styled.div`
         border: 1px solid #ccc;
         border-radius: 4px;
         font-size: 16px;
-        width: 160px;
+        width: 100%;
+        max-width: 390px;
         outline: none;
+      }
+    }
+  }
+
+  /* Add media queries for responsiveness */
+  @media (max-width: 768px) {
+    .MoneyContainer {
+      margin-top: 3rem;
+      h1 {
+        font-size: 36px;
+      }
+      h4 {
+        margin-left: 1rem;
+        font-size: 16px;
+        margin-top: 2rem;
+      }
+      .ButtonWrapper {
+        gap: 1rem;
+      }
+      button {
+        width: 80px;
+        height: 40px;
+        font-size: 14px;
+      }
+      .CustomAmountContainer {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+
+        input {
+          width: 100%;
+          max-width: none;
+        }
       }
     }
   }
@@ -187,7 +241,7 @@ const ButtonContainer = styled.div`
   justify-content: center;
   gap: 3rem;
   margin-top: 2rem;
-  button{
+  button {
     width: 100px;
     height: 30px;
     font-size: 15px;

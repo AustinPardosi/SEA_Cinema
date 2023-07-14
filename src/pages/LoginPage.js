@@ -1,6 +1,11 @@
 import React, { useState } from "react";
 import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Modal from "react-modal";
+import { css } from "@emotion/react";
+import { BeatLoader } from "react-spinners";
 
 import styled from "styled-components";
 import Header from "../components/Header";
@@ -10,22 +15,37 @@ import { firebaseAuth } from "../utils/firebase-config";
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate()
+  const [isLoading, setIsLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
 
-  const handleLogin = async()=>{
+  const handleLogin = async () => {
     try {
-      await signInWithEmailAndPassword(firebaseAuth, email, password)
-    } catch (error) {
-      console.log(error)
-    }
-  }
+      setIsLoading(true);
 
-  onAuthStateChanged(firebaseAuth, (currentUser)=> {
-    if(currentUser) navigate('/')
-  })
+      await signInWithEmailAndPassword(firebaseAuth, email, password);
+
+      setIsLoading(false);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.log(error);
+      toast.error("Invalid credentials. Please check your email and password.");
+      setIsLoading(false);
+    }
+  };
+
+  onAuthStateChanged(firebaseAuth, (currentUser) => {
+    if (currentUser) navigate("/");
+  });
+
+  const override = css`
+    display: block;
+    margin: 0 auto;
+  `;
 
   return (
     <Wrappper>
+      <ToastContainer />
       <BackgroundImage />
       <div className="loginContent">
         <Header />
@@ -49,11 +69,27 @@ const LoginPage = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 value={password}
               />
-              <button onClick={handleLogin}>Login</button>
+              <button onClick={handleLogin}>
+                {isLoading ? (
+                  <BeatLoader color="#ffffff" size={10} css={override} />
+                ) : (
+                  "Login"
+                )}
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Modal or popup */}
+      <Modal
+        isOpen={isModalOpen}
+        onRequestClose={() => setIsModalOpen(false)}
+        contentLabel="Login Success"
+      >
+        <h2>Login Success!</h2>
+        <button onClick={() => setIsModalOpen(false)}>Close</button>
+      </Modal>
     </Wrappper>
   );
 };
@@ -83,11 +119,10 @@ const Wrappper = styled.div`
       justify-content: center;
       gap: 2rem;
       background-color: rgba(0, 0, 0, 0.67);
-      height: 60vh;
       padding: 3rem;
-      padding-top: 0.01rem;
       color: white;
       border-radius: 0.4rem;
+      
 
       .container {
         display: flex;

@@ -17,8 +17,8 @@ const TopNav = ({ isScrolled }) => {
   ];
 
   const navigate = useNavigate();
-  onAuthStateChanged(firebaseAuth, (currentUser)=> {
-    if(!currentUser) navigate('/login');
+  onAuthStateChanged(firebaseAuth, (currentUser) => {
+    if (!currentUser) navigate('/login');
   });
 
   return (
@@ -27,7 +27,7 @@ const TopNav = ({ isScrolled }) => {
         <div className="leftSide">
           <div className="logo">
             <img
-              src="https://res.cloudinary.com/ehizeex-shop/image/upload/v1668265433/NetflixApp/2560px-Netflix_2015_logo.svg_rbicwl_knwp6f.png"
+              src="https://res.cloudinary.com/dxdclqs4g/image/upload/v1689189426/IMG_2103-removebg-preview_uha2zp.png"
               alt="logo"
             />
           </div>
@@ -42,7 +42,7 @@ const TopNav = ({ isScrolled }) => {
           </ul>
         </div>
         <div className="rightSide">
-          <button onClick={()=>signOut(firebaseAuth)}>
+          <button onClick={() => signOut(firebaseAuth)}>
             <AiOutlineLogout />
           </button>
         </div>
@@ -79,6 +79,7 @@ const NavContainer = styled.div`
         display: flex;
         justify-content: center;
         align-items: center;
+        transform: scale(1.5);
       }
       img {
         width: 10rem;
@@ -86,6 +87,7 @@ const NavContainer = styled.div`
       }
       .links {
         display: flex;
+        margin-left: 2rem;
         list-style-type: none;
         gap: 3rem;
         li {
@@ -101,23 +103,55 @@ const NavContainer = styled.div`
       }
     }
     .rightSide {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-right: 1rem;
+      button {
+        background-color: red;
+        border: none;
+        cursor: pointer;
+        border-radius: 50%;
+        width: 3rem;
+        height: 3rem;
         display: flex;
+        justify-content: center;
         align-items: center;
-        gap: 1rem;
-        margin-right: 1rem;
-        button{
-            background-color: red;
-            border: none;
-            cursor: pointer;
-            border-radius: 50%;
+      }
+      svg {
+        color: white;
+        font-size: 2rem;
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    nav {
+      padding: 0.4rem 1rem;
+      .leftSide {
+        margin-left: 2rem;
+        .logo {
+          transform: scale(1);
         }
-        &:focus{
-            outline: none;
+        .links {
+          margin-left: 1rem;
+          li {
+            a {
+              font-size: 0.8rem;
+            }
+          }
         }
-        svg{
-            color: white;
-            font-size: 2rem;
+      }
+      .rightSide {
+        margin-right: 0.5rem;
+        button {
+          width: 2.5rem;
+          height: 2.5rem;
         }
+        svg {
+          font-size: 1.5rem;
+        }
+      }
     }
   }
 `;
