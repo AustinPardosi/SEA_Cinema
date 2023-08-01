@@ -1,6 +1,6 @@
 # SEA CINEMA Movie Ticket Booking Web
 > *Source Code* ini dibuat oleh saya untuk memenuhi Seleksi Software Engineering Academy COMPFEST 15
-> String Matching dan Regular Expression dalam Pembuatan ChatGPT Sederhana. Telah dilakukan *deployment* pada aplikasi web yang dibangun pada tautan [berikut](https://seacinema-one.vercel.app/)
+> Telah dilakukan *deployment* pada aplikasi web yang dibangun pada tautan [berikut](https://seacinema-one.vercel.app/)
 
 ## Daftar Isi
 - [Author](#author)
